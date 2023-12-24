@@ -5,7 +5,7 @@ locals {
 }
 
 #Web-ACL 생성
-resource "aws_wafv2_web_acl" "wafv2_web_acl"{
+resource "aws_wafv2_web_acl" "wafv2-web-acl"{
   name = "wafv2-web-acl"
   scope = "REGIONAL"
 
@@ -72,7 +72,7 @@ resource "aws_wafv2_web_acl" "wafv2_web_acl"{
 
   #속도 기반 규칙에 따라 동일 IP에서 5분에 200번 이상 접속을 요청하면 차단하는 규칙
   rule{
-    name = var.rate_based_rule_name
+    name = "RateBasedRule"
     priority = 10
 
     action{
