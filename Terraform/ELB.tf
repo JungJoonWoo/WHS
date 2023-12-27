@@ -1,7 +1,7 @@
 #로드 밸런서 보안 그룹 생성
 resource "aws_security_group" "lb-sg"{
   name = "lb_sg"
-
+  vpc_id = aws_vpc.main.id
   #인바운드 규칙
   ingress{
     from_port = 80
@@ -52,5 +52,47 @@ resource "aws_lb" "application-load-balancer"{
 
   tags = {
     Name = "application_load_balancer"
+  }
+}
+
+#인터넷 게이트웨이 생성
+resource "aws_internet_gateway" "igw"{
+  vpc_id = aws_vpc.main.id
+}
+
+#라우트 테이블 생성
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+  }
+}
+
+#라우트 테이블과 서브넷 연결
+resource "aws_route_table_association" "public" {
+  count          = 2
+  subnet_id      = aws_subnet.public[count.index].id
+  route_table_id = aws_route_table.public.id
+}
+
+# 대상 그룹 생성
+resource "aws_lb_target_group" "example" {
+  name     = "example-tg"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.main.id
+}
+
+# 리스너 생성 및 로드 밸런서와 대상 그룹 연결
+resource "aws_lb_listener" "front_end" {
+  load_balancer_arn = aws_lb.application-load-balancer.arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.example.arn
   }
 }
