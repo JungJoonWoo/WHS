@@ -1,10 +1,10 @@
 #opensearch 생성
 resource "aws_elasticsearch_domain" "domain" {
-  domain_name = "opensearch-siem"
-  elasticsearch_version = "2.11"
+  domain_name = "opensearch-test"
+  elasticsearch_version = "OpenSearch_2.11"
 
   cluster_config {
-    instance_type = "m6g.large.search"
+    instance_type = "m6g.large.elasticsearch"
   }
   ebs_options {
     ebs_enabled = true
@@ -21,10 +21,12 @@ resource "aws_elasticsearch_domain_policy" "main"{
     "Statement": [
         {
             "Action": "es:*",
-            "Principal": "*",
+            "Principal": {
+                "AWS": ["*"]
+            },
             "Effect": "Allow",
             "Condition": {
-                "IpAddress": {"aws:SourceIp": "127.0.0.1/32"}
+                "IpAddress": {"aws:SourceIp": "58.224.82.92/32"}
             },
             "Resource": "${aws_elasticsearch_domain.domain.arn}/*"
         }
