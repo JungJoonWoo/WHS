@@ -28,7 +28,7 @@ resource "aws_lambda_function" "make_index_pattern" {
 
   environment {
     variables = {
-      ES_ENDPOINT = aws_elasticsearch_domain.domain.endpoint
+      ES_ENDPOINT = "https://search-opensearch-test-y7arqfgylgc53q3d2ndusgomqa.ap-northeast-2.es.amazonaws.com"
       INDEX_PATTERN = "aws-waf-logs-*"
     }
   }
@@ -40,7 +40,7 @@ resource "aws_lambda_permission" "apigw" {
   function_name = aws_lambda_function.make_index_pattern.function_name
   principal     = "apigateway.amazonaws.com"
 
-  source_arn = "arn:aws:execute-api:${var.region}:${data.aws_caller_identity.current.account_id}:${aws_api_gateway_rest_api.example.id}/*/*/*"
+  source_arn = "arn:aws:execute-api:ap-northeast-2:${data.aws_caller_identity.current.account_id}:${aws_api_gateway_rest_api.example.id}/*/*/*"
 }
 
 resource "aws_api_gateway_integration" "lambda" {
@@ -99,11 +99,11 @@ resource "aws_cloudwatch_event_target" "run_lambda_every_five_minutes" {
   arn       = aws_lambda_function.make_index_pattern.arn
 }
 
-resource "aws_iam_role_policy" "policy" {
-  name = "policy"
-  role = aws_iam_role.iam_for_lambda.id
-
-  policy = <<EOF
+resource "aws_iam_policy" "policy" {
+  name        = "ESPolicy"
+  path        = "/"
+  description = "An inline policy to allow ES operations"
+  policy      = <<EOF
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -119,4 +119,25 @@ resource "aws_iam_role_policy" "policy" {
   ]
 }
 EOF
+}
+
+resource "aws_iam_role_policy_attachment" "attach_policy" {
+  role       = aws_iam_role.iam_for_lambda.name
+  policy_arn = aws_iam_policy.policy.arn
+}
+
+
+data "aws_iam_policy" "AWSLambdaBasicExecutionRole" {
+  arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy_attachment" "attach_AWSLambdaBasicExecutionRole" {
+  role       = aws_iam_role.iam_for_lambda.name
+  policy_arn = data.aws_iam_policy.AWSLambdaBasicExecutionRole.arn
+}
+
+
+resource "aws_iam_role" "iam_for_lambda_excutionrule" {
+  name = "iam_for_lambda_excutionrule"
+  assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }

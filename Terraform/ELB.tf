@@ -34,7 +34,7 @@ resource "aws_subnet" "public" {
   vpc_id = aws_vpc.main.id
   cidr_block = count.index == 0 ? "10.0.1.0/24" : "10.0.2.0/24"
   map_public_ip_on_launch = true // 인스턴스가 시작할 때 마다 public ip 주소 할당
-
+  availability_zone = count.index == 0 ? "ap-northeast-2a" : "ap-northeast-2c"
   tags = {
     Name = "public_subnet_${count.index}"
   }
@@ -48,7 +48,7 @@ resource "aws_lb" "application-load-balancer"{
   security_groups    = [aws_security_group.lb-sg.id]
   subnets            = [for subnet in aws_subnet.public : subnet.id] // public 서브넷 내의 모든 서브넷 ID를 가져옴
 
-  enable_deletion_protection = true
+  enable_deletion_protection = false
 
   tags = {
     Name = "application_load_balancer"
